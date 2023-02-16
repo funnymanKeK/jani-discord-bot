@@ -6,6 +6,6 @@ import java.util.List;
 
 public interface IComplimentService {
 
-    List<ComplimentEntity> getDirtyWords(int limit);
+    List<ComplimentEntity> getCompliments(int limit);
 
 }

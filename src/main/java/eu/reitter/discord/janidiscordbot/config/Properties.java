@@ -21,10 +21,12 @@ public class Properties {
     @NotBlank
     private String prefix;
     @NotNull
-    private Integer insultCommandLimit;
+    private Integer complimentLimit;
     @NotBlank
     private String version;
     @NotBlank
     private String imagesPath;
+    @NotBlank
+    private String defaultTextChannelName;
 
 }

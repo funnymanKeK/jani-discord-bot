@@ -2,9 +2,10 @@ package eu.reitter.discord.janidiscordbot.listener;
 
 import eu.reitter.discord.janidiscordbot.command.ICommand;
 import eu.reitter.discord.janidiscordbot.config.Properties;
-import eu.reitter.discord.janidiscordbot.exception.BotRuntimeException;
+import eu.reitter.discord.janidiscordbot.exception.BotException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.event.message.MessageCreateEvent;
 import org.javacord.api.listener.message.MessageCreateListener;
 import org.springframework.lang.Nullable;
@@ -28,12 +29,13 @@ public class MessageListener implements MessageCreateListener {
         if (isBotMessage(event) || isPrivateMessage(event) || badPrefix(event, properties.getPrefix())) return;
 
         log.info("Processing message started...");
+        final TextChannel textChannel = event.getChannel();
 
         String message = event.getMessageContent();
         log.debug("Message received: {}", message);
 
         //Removing the command prefix and splitting the arguments into array
-        String[] arguments = message.replaceFirst(properties.getPrefix(), "").split(" ");
+        String[] arguments = message.substring(1).split(" ");
 
         String commandName = arguments[0];
         log.debug("Command: {}", commandName);
@@ -43,7 +45,7 @@ public class MessageListener implements MessageCreateListener {
 
         ICommand command = findCommand(commandName);
         if (command == null) {
-            createSimpleEmbedMessage(String.format("Unrecognised command '%s' found!", commandName));
+            textChannel.sendMessage(createSimpleEmbedMessage(String.format("Unrecognised command '%s' found!", commandName)));
             log.warn("Unrecognised command '{}' found!", commandName);
             return;
         }
@@ -53,16 +55,16 @@ public class MessageListener implements MessageCreateListener {
             log.info("Start processing {} command", command.getPrefix());
             command.run(event, arguments);
             log.info("Finished processing {} command in {}ms", command.getPrefix(), System.currentTimeMillis() - time);
-        } catch (BotRuntimeException e) {
-            log.error("BotRuntimeException occurred: {}", e.getMessage(), e);
-            createSimpleEmbedMessage("Unexpected error happened: " + e.getMessage());
+        } catch (BotException e) {
+            log.error("BotRuntimeException occurred: {}", e.getMessage());
+            textChannel.sendMessage(createSimpleEmbedMessage("Error happened: " + e.getMessage()));
         }
     }
 
     @Nullable
     private ICommand findCommand(String commandName) {
         for (ICommand command : commands) {
-            if (command.getPrefix().equals(commandName)) return command;
+            if (command.getPrefix().equalsIgnoreCase(commandName)) return command;
         }
         return null;
     }

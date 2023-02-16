@@ -1,4 +1,4 @@
-package eu.reitter.discord.janidiscordbot.command.music;
+package eu.reitter.discord.janidiscordbot.command.music.playlist;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import eu.reitter.discord.janidiscordbot.command.ICommand;
@@ -6,32 +6,53 @@ import eu.reitter.discord.janidiscordbot.config.Properties;
 import eu.reitter.discord.janidiscordbot.config.music.AudioManager;
 import eu.reitter.discord.janidiscordbot.config.music.LavaplayerAudioSource;
 import eu.reitter.discord.janidiscordbot.config.music.ServerMusicManager;
+import eu.reitter.discord.janidiscordbot.entity.PlaylistEntity;
+import eu.reitter.discord.janidiscordbot.entity.TrackEntity;
 import eu.reitter.discord.janidiscordbot.exception.BotException;
+import eu.reitter.discord.janidiscordbot.service.IPlaylistService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.audio.AudioConnection;
 import org.javacord.api.audio.AudioSource;
 import org.javacord.api.entity.channel.ServerVoiceChannel;
 import org.javacord.api.entity.channel.TextChannel;
+import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.PermissionType;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.event.message.MessageCreateEvent;
 import org.springframework.stereotype.Component;
 
+import javax.sound.midi.Track;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 import static eu.reitter.discord.janidiscordbot.util.BotUtils.*;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
-public class PlayCommand implements ICommand {
+public class PlayPlaylistCommand implements ICommand {
 
-    private final AudioPlayerManager audioPlayerManager;
-    private final AudioManager audioManager;
     private final Properties properties;
 
+    private final AudioManager audioManager;
+    private final IPlaylistService playlistService;
+    private final AudioPlayerManager audioPlayerManager;
+
     @Override
-    public void run(MessageCreateEvent event, String[] arguments) throws BotException {
-        if (badArguments(event, arguments, 1, false, null)) return;
+    public void run(MessageCreateEvent event, String[] arguments) {
+        log.debug("Begin playPlaylist command with arguments {}", Arrays.toString(arguments));
+
+        if (badArguments(event, arguments, 1, true, null)) {
+            log.debug("Arguments does not match!");
+            return;
+        }
+
+        String playlistName = arguments[0];
+        log.debug("PlaylistName: {}", playlistName);
+
+        PlaylistEntity playlist = playlistService.findByName(playlistName);
+        if (playlist.getTracks().isEmpty()) throw new BotException("Playlist does not contain any tracks!");
         final TextChannel textChannel = event.getChannel();
 
         if (!isAuthorOnVoiceChannel(event)) {
@@ -55,19 +76,24 @@ public class PlayCommand implements ICommand {
         final ServerMusicManager serverMusicManager = audioManager.get(server.getId());
         audioManager.servers.add(server);
 
-        //Bot is not connected to voice channel
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+        embedBuilder.setTitle(String.format("Playing %s playlist...", playlistName));
+        embedBuilder.setColor(randomColor());
+
         if (!isBotConnected(event, voiceChannel) && server.getAudioConnection().isEmpty()) {
             voiceChannel.connect().thenAccept(audioConnection -> {
                         AudioSource audio = new LavaplayerAudioSource(event.getApi(), serverMusicManager.player);
                         audioConnection.setAudioSource(audio);
                         audioConnection.setSelfDeafened(true);
                         try {
-                            String title = playMusic(mergeArguments(arguments), serverMusicManager, audioPlayerManager).get();
-                            textChannel.sendMessage(createSimpleEmbedMessage(title));
+                            for (int i = 0; i < playlist.getTracks().size(); i++) {
+                                String title = playMusic(playlist.getTracks().get(i).getUrl(), serverMusicManager, audioPlayerManager).get();
+                                embedBuilder.addField(i + ".", title);
+                            }
+                            textChannel.sendMessage(embedBuilder);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         } catch (ExecutionException e) {
-
                         }
                     }
             );
@@ -86,8 +112,11 @@ public class PlayCommand implements ICommand {
             audioConnection.setAudioSource(audio);
             audioConnection.setSelfDeafened(true);
             try {
-                String title = playMusic(mergeArguments(arguments), serverMusicManager, audioPlayerManager).get();
-                textChannel.sendMessage(createSimpleEmbedMessage(title));
+                for (int i = 0; i < playlist.getTracks().size(); i++) {
+                    String title = playMusic(playlist.getTracks().get(i).getUrl(), serverMusicManager, audioPlayerManager).get();
+                    embedBuilder.addField(i + ".", title);
+                }
+                textChannel.sendMessage(embedBuilder);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new BotException(e);
@@ -95,18 +124,16 @@ public class PlayCommand implements ICommand {
                 throw new BotException(e);
             }
         }
-
+        log.debug("PlayPlaylist command ended");
     }
 
     @Override
     public String getPrefix() {
-        return "play";
+        return "playPlaylist";
     }
 
     @Override
     public String getDescription() {
-        return String.format("Plays music from Youtube. Usage: %s%s 'youtube link or title'", properties.getPrefix(), getPrefix());
+        return String.format("Queues the tracks of the given playlist. Usage: %s%s 'playlist name'", properties.getPrefix(), getPrefix());
     }
-
-
 }

@@ -4,13 +4,14 @@ import eu.reitter.discord.janidiscordbot.command.ICommand;
 import eu.reitter.discord.janidiscordbot.config.Properties;
 import eu.reitter.discord.janidiscordbot.config.music.AudioManager;
 import eu.reitter.discord.janidiscordbot.config.music.ServerMusicManager;
-import eu.reitter.discord.janidiscordbot.exception.BotRuntimeException;
+import eu.reitter.discord.janidiscordbot.exception.BotException;
 import lombok.RequiredArgsConstructor;
 import org.javacord.api.entity.channel.ServerVoiceChannel;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.permission.PermissionType;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.event.message.MessageCreateEvent;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import static eu.reitter.discord.janidiscordbot.util.BotUtils.createSimpleEmbedMessage;
@@ -24,7 +25,8 @@ public class ShuffleCommand implements ICommand {
     private final AudioManager audioManager;
 
     @Override
-    public void run(MessageCreateEvent event, String[] arguments) {
+    public void run(MessageCreateEvent event, String[] arguments) throws BotException {
+        if (badArguments(event, arguments, 0, true, null)) return;
         final TextChannel textChannel = event.getChannel();
 
         if (!isAuthorOnVoiceChannel(event)) {
@@ -32,7 +34,7 @@ public class ShuffleCommand implements ICommand {
             return;
         }
 
-        final ServerVoiceChannel voiceChannel = event.getMessageAuthor().getConnectedVoiceChannel().orElseThrow(() -> new BotRuntimeException("No voice channel found!"));
+        final ServerVoiceChannel voiceChannel = event.getMessageAuthor().getConnectedVoiceChannel().orElseThrow(() -> new BotException("No voice channel found!"));
 
         if (!voiceChannel.canYouSee() || !voiceChannel.canYouConnect()) {
             textChannel.sendMessage(createSimpleEmbedMessage("The bot cannot see or connect to the voice channel!"));
@@ -44,7 +46,7 @@ public class ShuffleCommand implements ICommand {
             return;
         }
 
-        final Server server = event.getServer().orElseThrow(() -> new BotRuntimeException("No server found!"));
+        final Server server = event.getServer().orElseThrow(() -> new BotException("No server found!"));
         if (server.getAudioConnection().isEmpty()) {
             textChannel.sendMessage(createSimpleEmbedMessage("Bot is not connected to voice channel!"));
             return;
@@ -52,17 +54,12 @@ public class ShuffleCommand implements ICommand {
 
         ServerMusicManager serverMusicManager = audioManager.get(server.getId());
         serverMusicManager.scheduler.shuffleQueue();
-        textChannel.sendMessage(createSimpleEmbedMessage(String.format("Playlist successfully shuffled. Check new order with %shuffle command!", properties.getPrefix())));
+        textChannel.sendMessage(createSimpleEmbedMessage(String.format("Playlist successfully shuffled. Check new order with %s shuffle command!", properties.getPrefix())));
     }
 
     @Override
     public String getPrefix() {
         return "shuffle";
-    }
-
-    @Override
-    public int getMinArgumentNumber() {
-        return 0;
     }
 
     @Override

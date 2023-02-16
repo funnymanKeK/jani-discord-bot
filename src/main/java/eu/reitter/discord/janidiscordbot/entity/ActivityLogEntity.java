@@ -7,40 +7,44 @@ import org.hibernate.Hibernate;
 import java.sql.Timestamp;
 import java.util.Objects;
 
-
 @Getter
 @Setter
 @ToString
 @RequiredArgsConstructor
-@Table(name = "COMPLIMENT")
+@Table(name = "ACTIVITY_LOG")
 @Entity
-public class ComplimentEntity {
+public class ActivityLogEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_COMPLIMENT")
-    @SequenceGenerator(sequenceName = "SEQ_COMPLIMENT", allocationSize = 1, name = "SEQ_COMPLIMENT")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ACTIVITY_LOG")
+    @SequenceGenerator(sequenceName = "SEQ_ACTIVITY_LOG", allocationSize = 1, name = "SEQ_ACTIVITY_LOG")
     private Long id;
-
-    @Column(unique = true, nullable = false)
-    private String compliment;
-
     @Column(nullable = false)
-    private Timestamp createDate;
-
+    private String commandName;
+    @Column
+    private String arguments;
     @Column(nullable = false)
-    private Timestamp modifyDate;
-
+    private Long userId;
     @Column(nullable = false)
-    private String createUser;
-
+    private Long messageId;
     @Column(nullable = false)
-    private String modifyUser;
+    private String userName;
+    @Column
+    private Timestamp startDate;
+    @Column
+    private Timestamp finishDate;
+    @Column
+    private String errorMessage;
+    @Column
+    private Long serverId;
+    @Column
+    private String serverName;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        ComplimentEntity that = (ComplimentEntity) o;
+        ActivityLogEntity that = (ActivityLogEntity) o;
         return id != null && Objects.equals(id, that.id);
     }
 

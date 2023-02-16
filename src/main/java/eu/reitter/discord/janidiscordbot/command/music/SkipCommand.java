@@ -3,7 +3,7 @@ package eu.reitter.discord.janidiscordbot.command.music;
 import eu.reitter.discord.janidiscordbot.command.ICommand;
 import eu.reitter.discord.janidiscordbot.config.Properties;
 import eu.reitter.discord.janidiscordbot.config.music.AudioManager;
-import eu.reitter.discord.janidiscordbot.exception.BotRuntimeException;
+import eu.reitter.discord.janidiscordbot.exception.BotException;
 import lombok.RequiredArgsConstructor;
 import org.javacord.api.entity.channel.ServerVoiceChannel;
 import org.javacord.api.entity.channel.TextChannel;
@@ -23,7 +23,8 @@ public class SkipCommand implements ICommand {
     private final AudioManager audioManager;
 
     @Override
-    public void run(MessageCreateEvent event, String[] arguments) {
+    public void run(MessageCreateEvent event, String[] arguments) throws BotException {
+        if (badArguments(event, arguments, 0, true, null)) return;
         final TextChannel textChannel = event.getChannel();
 
         if (!isAuthorOnVoiceChannel(event)) {
@@ -31,7 +32,7 @@ public class SkipCommand implements ICommand {
             return;
         }
 
-        final ServerVoiceChannel voiceChannel = event.getMessageAuthor().getConnectedVoiceChannel().orElseThrow(() -> new BotRuntimeException("No voice channel found!"));
+        final ServerVoiceChannel voiceChannel = event.getMessageAuthor().getConnectedVoiceChannel().orElseThrow(() -> new BotException("No voice channel found!"));
 
         if (!voiceChannel.canYouSee() || !voiceChannel.canYouConnect()) {
             textChannel.sendMessage(createSimpleEmbedMessage("The bot cannot see or connect to the voice channel!"));
@@ -43,7 +44,7 @@ public class SkipCommand implements ICommand {
             return;
         }
 
-        final Server server = event.getServer().orElseThrow(() -> new BotRuntimeException("No server found!"));
+        final Server server = event.getServer().orElseThrow(() -> new BotException("No server found!"));
         if (server.getAudioConnection().isEmpty()) {
             textChannel.sendMessage(createSimpleEmbedMessage("Bot is not connected to voice channel!"));
             return;
@@ -56,11 +57,6 @@ public class SkipCommand implements ICommand {
     @Override
     public String getPrefix() {
         return "skip";
-    }
-
-    @Override
-    public int getMinArgumentNumber() {
-        return 0;
     }
 
     @Override

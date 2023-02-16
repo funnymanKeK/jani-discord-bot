@@ -5,8 +5,9 @@ import eu.reitter.discord.janidiscordbot.command.ICommand;
 import eu.reitter.discord.janidiscordbot.config.Properties;
 import eu.reitter.discord.janidiscordbot.config.music.AudioManager;
 import eu.reitter.discord.janidiscordbot.config.music.ServerMusicManager;
-import eu.reitter.discord.janidiscordbot.exception.BotRuntimeException;
+import eu.reitter.discord.janidiscordbot.exception.BotException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.entity.channel.ServerVoiceChannel;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
@@ -17,48 +18,62 @@ import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.io.File;
+import java.util.Arrays;
 
-import static eu.reitter.discord.janidiscordbot.util.BotUtils.createSimpleEmbedMessage;
-import static eu.reitter.discord.janidiscordbot.util.BotUtils.isAuthorOnVoiceChannel;
+import static eu.reitter.discord.janidiscordbot.util.BotUtils.*;
 
-@RequiredArgsConstructor
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class CurrentCommand implements ICommand {
 
     private final Properties properties;
     private final AudioManager audioManager;
 
+    private static final String AVATAR_FILENAME = "avatar.png";
+
     @Override
-    public void run(MessageCreateEvent event, String[] arguments) {
+    public void run(MessageCreateEvent event, String[] arguments) throws BotException {
+        log.debug("Begin current command with arguments {}", Arrays.toString(arguments));
+
+        if (badArguments(event, arguments, 0, true, null)) {
+            log.debug("Arguments does not match!");
+            return;
+        }
+
         final TextChannel textChannel = event.getChannel();
 
         if (!isAuthorOnVoiceChannel(event)) {
             textChannel.sendMessage(createSimpleEmbedMessage("You are not connected to any voice channels!"));
+            log.debug("User is not connected to voice channel");
             return;
         }
 
-        final ServerVoiceChannel voiceChannel = event.getMessageAuthor().getConnectedVoiceChannel().orElseThrow(() -> new BotRuntimeException("No voice channel found!"));
+        final ServerVoiceChannel voiceChannel = event.getMessageAuthor().getConnectedVoiceChannel().orElseThrow(() -> new BotException("No voice channel found!"));
 
         if (!voiceChannel.canYouSee() || !voiceChannel.canYouConnect()) {
             textChannel.sendMessage(createSimpleEmbedMessage("The bot cannot see or connect to the voice channel!"));
+            log.debug("User and bot are not on the same voice channel");
             return;
         }
 
         if (!voiceChannel.hasPermission(event.getApi().getYourself(), PermissionType.SPEAK)) {
             textChannel.sendMessage(createSimpleEmbedMessage("The bot does not have permission to speak!"));
+            log.debug("Bot does not have speak permission");
             return;
         }
 
-        final Server server = event.getServer().orElseThrow(() -> new BotRuntimeException("No server found!"));
+        final Server server = event.getServer().orElseThrow(() -> new BotException("No server found!"));
         if (server.getAudioConnection().isEmpty()) {
             textChannel.sendMessage(createSimpleEmbedMessage("Bot is not connected to voice channel!"));
+            log.debug("Bot is not connected to voice channel");
             return;
         }
 
         ServerMusicManager serverMusicManager = audioManager.get(server.getId());
 
         EmbedBuilder embed = new EmbedBuilder();
-        embed.setAuthor("Jani bot++", null, new File(properties.getImagesPath() + "avatar.png"));
+  //      embed.setAuthor("Jani bot++", null, new File(properties.getImagesPath() + AVATAR_FILENAME));
         embed.setTitle("Songs on the playlist in order:");
 
         int prior = 1;
@@ -67,18 +82,14 @@ public class CurrentCommand implements ICommand {
             prior++;
         }
 
-        embed.setColor(Color.MAGENTA);
+        embed.setColor(randomColor());
         textChannel.sendMessage(embed);
+        log.debug("Current command ended");
     }
 
     @Override
     public String getPrefix() {
         return "current";
-    }
-
-    @Override
-    public int getMinArgumentNumber() {
-        return 0;
     }
 
     @Override

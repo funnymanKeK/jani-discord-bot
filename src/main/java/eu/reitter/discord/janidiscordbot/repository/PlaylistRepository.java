@@ -10,5 +10,6 @@ import java.util.Optional;
 public interface PlaylistRepository extends JpaRepository<PlaylistEntity, Long> {
 
     Optional<PlaylistEntity> findByName(String name);
+    int countByName(String name);
 
 }

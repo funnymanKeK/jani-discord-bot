@@ -4,6 +4,7 @@ import eu.reitter.discord.janidiscordbot.config.Properties;
 import eu.reitter.discord.janidiscordbot.entity.ComplimentEntity;
 import eu.reitter.discord.janidiscordbot.repository.ComplimentRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,12 +14,13 @@ import java.util.List;
 @AllArgsConstructor
 public class ComplimentService implements IComplimentService {
 
-    private final ComplimentRepository complimentRepository;
     private final Properties properties;
+
+    private final ComplimentRepository complimentRepository;
 
     @Override
     @Transactional(readOnly = true)
-    public List<ComplimentEntity> getDirtyWords(int limit) {
-        return complimentRepository.findRandomCompliment(properties.getInsultCommandLimit());
+    public List<ComplimentEntity> getCompliments(int limit) {
+        return complimentRepository.findRandomCompliment(properties.getComplimentLimit());
     }
 }

@@ -4,12 +4,14 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.FunctionalResultHandler;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import eu.reitter.discord.janidiscordbot.config.music.ServerMusicManager;
-import eu.reitter.discord.janidiscordbot.exception.BotRuntimeException;
+import eu.reitter.discord.janidiscordbot.exception.BotException;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.javacord.api.entity.channel.ServerVoiceChannel;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.event.message.MessageCreateEvent;
 
+import java.awt.*;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
@@ -36,7 +38,7 @@ public class BotUtils {
     }
 
     public static EmbedBuilder createSimpleEmbedMessage(String content) {
-        return new EmbedBuilder().setDescription(content);
+        return new EmbedBuilder().setDescription(content).setColor(randomColor());
     }
 
     public static String mergeArguments(String[] arguments) {
@@ -68,7 +70,7 @@ public class BotUtils {
                     }
                 },
                 () -> title.complete("We couldn't find the track."),
-                BotRuntimeException::new));
+                BotException::new));
 
         return title;
     }
@@ -80,15 +82,28 @@ public class BotUtils {
         audioPlayerManager.loadItemOrdered(serverMusicManager, url, new FunctionalResultHandler(
                 audioTrackFuture::complete,
                 audioPlaylist -> {
-                    throw new BotRuntimeException("You cannot add playlist to playlist!");
+                    if (audioPlaylist.isSearchResult()) {
+                        audioTrackFuture.complete(audioPlaylist.getTracks().get(0));
+                    } else {
+                        throw new BotException("You cannot add playlist to playlist!");
+                    }
                 },
                 () -> {
-                    throw new BotRuntimeException("We couldn't find the track.");
+                    throw new BotException("We couldn't find the track.");
                 },
                 e -> {
-                    throw new BotRuntimeException(e);
+                    throw new BotException(e);
                 }));
         return audioTrackFuture;
+    }
+
+    public static Color randomColor() {
+        Random random = new Random();
+        return new Color(
+                random.nextFloat(),
+                random.nextFloat(),
+                random.nextFloat()
+        );
     }
 
     private BotUtils() {
