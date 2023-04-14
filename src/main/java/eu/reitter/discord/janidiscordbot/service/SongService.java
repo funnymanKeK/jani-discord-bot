@@ -47,8 +47,8 @@ public class SongService implements ISongService {
             trackEntity.setUrl(audioTrack.getInfo().uri);
             trackEntity.setCreateUser(userName);
             trackEntity.setModifyUser(userName);
-            trackEntity.setCreateDate(new Timestamp(new Date().getTime()));
-            trackEntity.setModifyDate(new Timestamp(new Date().getTime()));
+            trackEntity.setCreateDate(new Timestamp(System.currentTimeMillis()));
+            trackEntity.setModifyDate(new Timestamp(System.currentTimeMillis()));
             playlist.getTracks().add(trackEntity);
             return songRepository.save(trackEntity);
 

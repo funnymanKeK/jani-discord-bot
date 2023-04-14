@@ -15,7 +15,7 @@
 	<description>Demo project for Spring Boot</description>
 	<properties>
 		<java.version>17</java.version>
-		<javacord.version>3.7.0</javacord.version>
+		<javacord.version>3.8.0</javacord.version>
 		<apache.common.lang.version>3.12.0</apache.common.lang.version>
 		<lavaplayer.version>1.3.77</lavaplayer.version>
 		<commons.validator.version>1.7</commons.validator.version>

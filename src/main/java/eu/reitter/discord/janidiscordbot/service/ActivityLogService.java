@@ -26,7 +26,7 @@ public class ActivityLogService implements IActivityLogService {
     @Transactional
     public void updateFinishedActivity(Long messageId) {
         ActivityLogEntity activityLogEntity = activityLogRepository.findByMessageId(messageId).orElseThrow(() -> new BotException("No message found with messageId: " + messageId));
-        activityLogEntity.setFinishDate(new Timestamp(new Date().getTime()));
+        activityLogEntity.setFinishDate(new Timestamp(System.currentTimeMillis()));
         activityLogRepository.save(activityLogEntity);
     }
 
@@ -34,7 +34,7 @@ public class ActivityLogService implements IActivityLogService {
     @Transactional
     public void updateErrorActivity(long messageId, String exception) {
         ActivityLogEntity activityLogEntity = activityLogRepository.findByMessageId(messageId).orElseThrow(() -> new BotException("No message found with messageId: " + messageId));
-        activityLogEntity.setFinishDate(new Timestamp(new Date().getTime()));
+        activityLogEntity.setFinishDate(new Timestamp(System.currentTimeMillis()));
         activityLogEntity.setErrorMessage(exception);
         activityLogRepository.save(activityLogEntity);
     }

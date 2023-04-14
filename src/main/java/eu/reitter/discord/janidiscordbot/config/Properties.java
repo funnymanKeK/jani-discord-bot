@@ -26,7 +26,5 @@ public class Properties {
     private String version;
     @NotBlank
     private String imagesPath;
-    @NotBlank
-    private String defaultTextChannelName;
 
 }

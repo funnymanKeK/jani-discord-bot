@@ -11,7 +11,6 @@ import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.permission.PermissionType;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.event.message.MessageCreateEvent;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import static eu.reitter.discord.janidiscordbot.util.BotUtils.createSimpleEmbedMessage;

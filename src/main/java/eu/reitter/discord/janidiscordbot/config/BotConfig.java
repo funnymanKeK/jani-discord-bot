@@ -42,7 +42,8 @@ public class BotConfig {
                 .login()
                 .join();
         api.addMessageCreateListener(messageListener);
-        if (welcomeOnVoiceChannelListener != null) api.addServerVoiceChannelMemberJoinListener(welcomeOnVoiceChannelListener);
+        if (welcomeOnVoiceChannelListener != null)
+            api.addServerVoiceChannelMemberJoinListener(welcomeOnVoiceChannelListener);
         api.updateActivity(properties.getVersion());
         api.setAutomaticMessageCacheCleanupEnabled(true);
         api.setMessageCacheSize(10, 60 * 5);

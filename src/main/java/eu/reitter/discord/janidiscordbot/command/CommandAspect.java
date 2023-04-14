@@ -42,7 +42,7 @@ public class CommandAspect {
         activityLogEntity.setMessageId(event.getMessageId());
         activityLogEntity.setServerId(server.getId());
         activityLogEntity.setServerName(server.getName());
-        activityLogEntity.setStartDate(new Timestamp(new Date().getTime()));
+        activityLogEntity.setStartDate(new Timestamp(System.currentTimeMillis()));
         log.debug("About to save: {}", activityLogEntity);
 
         activityLogService.saveActivity(activityLogEntity);

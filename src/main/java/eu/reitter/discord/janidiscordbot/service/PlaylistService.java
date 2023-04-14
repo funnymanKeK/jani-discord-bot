@@ -33,8 +33,8 @@ public class PlaylistService implements IPlaylistService {
         playlist.setName(playlistName);
         playlist.setCreateUser(username);
         playlist.setModifyUser(username);
-        playlist.setCreateDate(new Timestamp(new Date().getTime()));
-        playlist.setModifyDate(new Timestamp(new Date().getTime()));
+        playlist.setCreateDate(new Timestamp(System.currentTimeMillis()));
+        playlist.setModifyDate(new Timestamp(System.currentTimeMillis()));
         playlistRepository.save(playlist);
         log.info("Finished creating playlist");
     }
